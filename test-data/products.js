@@ -5,5 +5,4 @@ module.exports = {
     boltTShirt: { name: 'Sauce Labs Bolt T-Shirt', price: 15.99 },
     fleeceJacket: { name: 'Sauce Labs Fleece Jacket', price: 49.99 },
   },
-  customer: { firstName: 'Sagar', lastName: 'Tester', postalCode: '411001' },
 };

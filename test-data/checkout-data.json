@@ -1,0 +1,10 @@
+{
+  "_comment": "Checkout form test data. Each row in invalidForms becomes its own validation test.",
+  "customer": { "firstName": "Sagar", "lastName": "Tester", "postalCode": "411001" },
+  "invalidForms": [
+    { "field": "first name", "firstName": "", "lastName": "Tester", "postalCode": "411001", "error": "Error: First Name is required" },
+    { "field": "last name", "firstName": "Sagar", "lastName": "", "postalCode": "411001", "error": "Error: Last Name is required" },
+    { "field": "postal code", "firstName": "Sagar", "lastName": "Tester", "postalCode": "", "error": "Error: Postal Code is required" },
+    { "field": "all fields", "firstName": "", "lastName": "", "postalCode": "", "error": "Error: First Name is required" }
+  ]
+}
