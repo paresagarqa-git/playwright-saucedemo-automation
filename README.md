@@ -28,3 +28,13 @@ npm run report         # open the HTML report
 Every pull request and every push to `main` runs the suite on Chromium and Firefox in
 GitHub Actions. The HTML report is uploaded as a build artifact
 (Actions tab → run → *Artifacts*).
+
+## Project structure
+
+```
+pages/            Page Object Model classes (one per screen)
+fixtures/         Custom Playwright fixtures (page objects + logged-in state)
+test-data/        Users, products and customer data
+tests/            Specs grouped by feature
+.github/workflows CI pipeline
+```
