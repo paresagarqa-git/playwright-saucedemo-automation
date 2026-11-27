@@ -31,10 +31,17 @@ class CheckoutPage extends BasePage {
     await this.continueButton.click();
   }
 
-  /** Reads a label like "Item total: $39.98" and returns 39.98 */
+  /**
+   * Reads a label like "Item total: $39.98" and returns 39.98.
+   * Waits for the label to be visible first and fails loudly if no amount is found,
+   * instead of silently returning NaN.
+   * @param {import('@playwright/test').Locator} locator
+   */
   async amountFrom(locator) {
-    const text = await locator.textContent();
-    return Number(text.split('$')[1]);
+    const text = await locator.innerText();
+    const match = text.replace(/,/g, '').match(/\$(\d+(?:\.\d+)?)/);
+    if (!match) throw new Error(`No dollar amount found in "${text}"`);
+    return Number(match[1]);
   }
 
   async finish() {
