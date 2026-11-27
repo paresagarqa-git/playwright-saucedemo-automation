@@ -62,6 +62,19 @@ jobs:
           path: test-results/
           retention-days: 14
 
+  # Single status check for branch protection: passes only if every browser/shard job passed.
+  # The ruleset on main requires a check named "test".
+  test-gate:
+    name: test${{ inputs.demo_failure && ' [demo failure]' || '' }}
+    if: ${{ always() }}
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: All browser and shard jobs passed
+        run: |
+          echo "Matrix result: ${{ needs.test.result }}"
+          test "${{ needs.test.result }}" = "success"
+
   # Combine all 8 shards into ONE HTML report (with screenshots/videos/traces
   # of any failure) and ONE JUnit file.
   merge-reports:

@@ -209,7 +209,8 @@ npx playwright install --with-deps
 2. **Artifacts**: blob reports per shard, plus screenshots, videos and traces when a test fails
 3. **Merge reports**: one combined HTML report and JUnit file, plus a pass/fail summary on the run page
 
-`main` is protected: changes land only through pull requests with passing status checks.
+A final `test` job passes only if every browser and shard passed. `main` is protected: changes land only
+through pull requests, and the `test` check must pass before merge.
 
 ## Development workflow
 
