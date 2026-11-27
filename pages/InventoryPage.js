@@ -2,7 +2,7 @@
 const { BasePage } = require('./BasePage');
 
 /** Turns "Sauce Labs Backpack" into "sauce-labs-backpack" (SauceDemo's data-test id format). */
-const toSlug = (name) => name.toLowerCase().replace(/[^a-z0-9.]+/g, '-').replace(/\./g, '-');
+const toSlug = (name) => name.toLowerCase().replace(/\s+/g, '-');
 
 class InventoryPage extends BasePage {
   /** @param {import('@playwright/test').Page} page */
