@@ -1,6 +1,7 @@
 // @ts-check
 const { test, expect } = require('../../fixtures/test-fixtures');
-const { products, customer } = require('../../test-data/products');
+const { products } = require('../../test-data/products');
+const { customer, invalidForms } = require('../../test-data/checkout-data.json');
 
 test.describe('Checkout', () => {
   test('user can complete an order end to end @smoke', async ({ page, loggedInPage, cartPage, checkoutPage }) => {
@@ -37,13 +38,7 @@ test.describe('Checkout', () => {
     });
   });
 
-  const missingFields = [
-    { field: 'first name', data: { ...customer, firstName: '' }, error: 'Error: First Name is required' },
-    { field: 'last name', data: { ...customer, lastName: '' }, error: 'Error: Last Name is required' },
-    { field: 'postal code', data: { ...customer, postalCode: '' }, error: 'Error: Postal Code is required' },
-  ];
-
-  for (const { field, data, error } of missingFields) {
+  for (const { field, error, ...data } of invalidForms) {
     test(`checkout form requires ${field} @regression`, async ({ page, loggedInPage, cartPage, checkoutPage }) => {
       await loggedInPage.addToCart(products.bikeLight.name);
       await loggedInPage.openCart();

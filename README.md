@@ -43,16 +43,16 @@ tests/            Specs grouped by feature
 
 | # | Area | Scenario | Tag |
 |---|------|----------|-----|
-| 1 | Auth | Standard user logs in and sees 6 products | @smoke |
-| 2 | Auth | Locked-out user gets a lockout error | @regression |
-| 3 | Auth | Invalid logins (empty username, empty password, wrong password) | @regression |
+| 1 | Auth | 5 valid users log in and see 6 products (data-driven) | @smoke |
+| 2 | Auth | Locked-out user gets a lockout error (data-driven) | @regression |
+| 3 | Auth | 7 more failed logins: empty fields, wrong password, unknown user, wrong case, SQL injection (data-driven) | @regression |
 | 4 | Auth | User logs out and returns to login | @smoke |
 | 5 | Auth | Inventory page is blocked without login | @regression |
 | 6 | Inventory | Sort by price (low→high, high→low) and name (Z→A) | @regression |
 | 7 | Cart | Add/remove items updates the cart badge | @smoke |
 | 8 | Cart | Cart keeps items after navigating away | @regression |
 | 9 | Checkout | Full order end to end with price/tax/total checks | @smoke |
-| 10 | Checkout | Form validation for missing first name, last name, postal code | @regression |
+| 10 | Checkout | Form validation for missing first name, last name, postal code, all fields (data-driven) | @regression |
 
 ## Reports and failure evidence
 
@@ -101,3 +101,17 @@ Or in GitHub: **Actions → Playwright Tests → Run workflow**, tick **demo_fai
 3. **Shards (CI)**: GitHub Actions splits the suite with `--shard=1/2` and `--shard=2/2` for each
    browser. That is 4 browsers x 2 shards = **8 jobs at once**, each with 4 workers. A final
    `merge reports` job combines everything into one HTML report.
+
+## Test data
+
+All test data lives in `test-data/`, separate from the tests:
+
+| File | Used by | Contents |
+|------|---------|----------|
+| `login-data.json` | `tests/auth/login.spec.js` | `validUsers` (5 accounts) and `invalidLogins` (8 failed-login cases with expected errors) |
+| `checkout-data.json` | `tests/checkout/checkout.spec.js` | Customer details and `invalidForms` validation cases |
+| `products.js` | cart and checkout tests | Product names and prices |
+| `users.js` | `loggedInPage` fixture | Default login account (password overridable with `SAUCE_PASSWORD`) |
+
+Specs loop over these arrays, so **each row becomes its own test**. To test another user or another
+failed login, add a row to the JSON file. No code change is needed.
