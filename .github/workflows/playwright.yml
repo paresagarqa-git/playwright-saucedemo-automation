@@ -12,16 +12,21 @@ on:
         default: false
 
 jobs:
+  # Cross-browser x sharded: 4 browsers x 2 shards = 8 jobs running in parallel,
+  # and each job runs 4 workers in parallel inside it.
   test:
-    name: e2e (${{ matrix.project }})${{ inputs.demo_failure && ' [demo failure]' || '' }}
+    name: e2e (${{ matrix.project }} ${{ matrix.shard }}/2)${{ inputs.demo_failure && ' [demo failure]' || '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        project: [chromium, firefox]
+        project: [chromium, firefox, webkit, edge]
+        shard: [1, 2]
     env:
       DEMO_FAILURE: ${{ inputs.demo_failure && '1' || '' }}
+      # Unique blob file per job so shards of different browsers don't overwrite each other when merged.
+      PLAYWRIGHT_BLOB_OUTPUT_NAME: report-${{ matrix.project }}-${{ matrix.shard }}.zip
     steps:
       - uses: actions/checkout@v4
 
@@ -33,39 +38,76 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps ${{ matrix.project }}
+      - name: Install browser
+        run: npx playwright install --with-deps ${{ matrix.project == 'edge' && 'msedge' || matrix.project }}
 
-      - name: Run Playwright tests
-        run: npx playwright test --project=${{ matrix.project }} --pass-with-no-tests
+      - name: Run Playwright tests (shard ${{ matrix.shard }}/2)
+        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/2 --pass-with-no-tests
 
-      # HTML report: always uploaded. Failed tests inside it carry their
-      # screenshot, video and trace, viewable right in the report.
-      - name: Upload HTML report
+      # Raw results for this shard; merged into one report by the next job.
+      - name: Upload blob report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.project }}
-          path: playwright-report/
-          retention-days: 14
+          name: blob-report-${{ matrix.project }}-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 3
 
-      # Raw failure evidence (PNG screenshots, WebM videos, trace.zip) and JUnit XML.
+      # Raw failure evidence (PNG screenshots, WebM videos, trace.zip).
       - name: Upload failure screenshots, videos and traces
         if: ${{ failure() }}
         uses: actions/upload-artifact@v4
         with:
-          name: failure-evidence-${{ matrix.project }}
+          name: failure-evidence-${{ matrix.project }}-${{ matrix.shard }}
           path: test-results/
           retention-days: 14
 
+  # Combine all 8 shards into ONE HTML report (with screenshots/videos/traces
+  # of any failure) and ONE JUnit file.
+  merge-reports:
+    name: merge reports${{ inputs.demo_failure && ' [demo failure]' || '' }}
+    if: ${{ !cancelled() }}
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      - name: Merge into HTML and JUnit
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: junit.xml
+        run: npx playwright merge-reports --reporter html,junit ./all-blob-reports
+
+      - name: Upload combined HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            junit.xml
+          retention-days: 14
+
       - name: Write job summary
-        if: ${{ !cancelled() }}
         run: |
           {
-            echo "### Playwright results (${{ matrix.project }})"
-            if [ -f test-results/junit.xml ]; then
-              node -e "const x=require('fs').readFileSync('test-results/junit.xml','utf8');const m=x.match(/<testsuites[^>]*>/)[0];const g=k=>(m.match(new RegExp(k+'=\"(\\\\d+)\"'))||[])[1]||0;console.log('| Total | Failed | Skipped |\n|---|---|---|\n| '+g('tests')+' | '+g('failures')+' | '+g('skipped')+' |')"
+            echo "### Playwright results (all browsers, all shards)"
+            if [ -f junit.xml ]; then
+              node -e "const x=require('fs').readFileSync('junit.xml','utf8');const m=x.match(/<testsuites[^>]*>/)[0];const g=k=>(m.match(new RegExp(k+'=\"(\\\\d+)\"'))||[])[1]||0;console.log('| Total | Failed | Skipped |\n|---|---|---|\n| '+g('tests')+' | '+g('failures')+' | '+g('skipped')+' |')"
             fi
             echo ""
-            echo "Download **playwright-report-${{ matrix.project }}** from the Artifacts section below, unzip it, and run \`npx playwright show-report <folder>\`."
+            echo "Download **playwright-report** from the Artifacts section, unzip it, and run \`npx playwright show-report playwright-report\`."
           } >> "$GITHUB_STEP_SUMMARY"
