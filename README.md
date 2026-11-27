@@ -64,9 +64,10 @@ tests/            Specs grouped by feature
 | Video (`.webm`) | Failed tests only | Attached in the HTML report and in `test-results/` |
 | Trace (`trace.zip`) | Failed tests only | Open from the HTML report, or `npx playwright show-trace <trace.zip>` |
 
-**In CI**, every run uploads `playwright-report-<browser>` as an artifact. When something fails it also
-uploads `failure-evidence-<browser>` with the raw screenshots, videos and traces, and the run summary
-shows a pass/fail table. Download the report artifact, unzip it, and run `npx playwright show-report <folder>`.
+**In CI**, all browsers and shards are merged into one `playwright-report` artifact (HTML + `junit.xml`).
+When something fails, each job also uploads `failure-evidence-<browser>-<shard>` with the raw screenshots,
+videos and traces, and the run summary shows a pass/fail table. Download the report artifact, unzip it,
+and run `npx playwright show-report playwright-report`.
 
 **Try it:** `tests/demo/demo-failure.spec.js` contains an intentional failure that is skipped by default.
 
@@ -76,3 +77,27 @@ npm run report
 ```
 
 Or in GitHub: **Actions → Playwright Tests → Run workflow**, tick **demo_failure**.
+
+## Cross-browser and parallel execution
+
+**Browsers** (projects in `playwright.config.js`):
+
+| Project | Engine | Run it |
+|---------|--------|--------|
+| `chromium` | Chrome / Chromium | `npm run test:chromium` |
+| `firefox` | Firefox | `npm run test:firefox` |
+| `webkit` | Safari engine | `npm run test:webkit` |
+| `edge` | Microsoft Edge (branded) | `npm run test:edge` (needs `npx playwright install msedge`) |
+
+`npm test` or `npm run test:cross-browser` runs every browser.
+
+**Parallelism** works at three levels:
+
+1. **Tests**: `fullyParallel: true` lets every test run at the same time, each in its own isolated
+   browser context. Tests never share state.
+2. **Workers**: worker processes on one machine. Default is 50% of CPU cores locally and 4 on CI.
+   Override with `WORKERS=6 npm test`, `npx playwright test --workers=6`, `npm run test:parallel`, or
+   `npm run test:serial` (one worker, useful for debugging).
+3. **Shards (CI)**: GitHub Actions splits the suite with `--shard=1/2` and `--shard=2/2` for each
+   browser. That is 4 browsers x 2 shards = **8 jobs at once**, each with 4 workers. A final
+   `merge reports` job combines everything into one HTML report.
