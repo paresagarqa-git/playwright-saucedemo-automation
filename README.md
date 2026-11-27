@@ -53,3 +53,26 @@ tests/            Specs grouped by feature
 | 8 | Cart | Cart keeps items after navigating away | @regression |
 | 9 | Checkout | Full order end to end with price/tax/total checks | @smoke |
 | 10 | Checkout | Form validation for missing first name, last name, postal code | @regression |
+
+## Reports and failure evidence
+
+| What | When | Where |
+|------|------|-------|
+| HTML report | Every run | `playwright-report/` (open with `npm run report`) |
+| JUnit XML | Every run | `test-results/junit.xml` |
+| Full-page screenshot | Failed tests only | Attached in the HTML report and in `test-results/` |
+| Video (`.webm`) | Failed tests only | Attached in the HTML report and in `test-results/` |
+| Trace (`trace.zip`) | Failed tests only | Open from the HTML report, or `npx playwright show-trace <trace.zip>` |
+
+**In CI**, every run uploads `playwright-report-<browser>` as an artifact. When something fails it also
+uploads `failure-evidence-<browser>` with the raw screenshots, videos and traces, and the run summary
+shows a pass/fail table. Download the report artifact, unzip it, and run `npx playwright show-report <folder>`.
+
+**Try it:** `tests/demo/demo-failure.spec.js` contains an intentional failure that is skipped by default.
+
+```bash
+DEMO_FAILURE=1 npx playwright test tests/demo --project=chromium   # macOS/Linux
+npm run report
+```
+
+Or in GitHub: **Actions → Playwright Tests → Run workflow**, tick **demo_failure**.
