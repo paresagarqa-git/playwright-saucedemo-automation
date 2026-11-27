@@ -1,0 +1,60 @@
+{
+  "_comment": "Login test data. Add a row here to add a test: no code changes needed. Accounts are SauceDemo's public demo users.",
+  "validUsers": [
+    { "username": "standard_user", "password": "secret_sauce", "description": "standard user" },
+    { "username": "problem_user", "password": "secret_sauce", "description": "problem user (buggy UI)" },
+    { "username": "performance_glitch_user", "password": "secret_sauce", "description": "slow login user" },
+    { "username": "error_user", "password": "secret_sauce", "description": "error user" },
+    { "username": "visual_user", "password": "secret_sauce", "description": "visual glitch user" }
+  ],
+  "invalidLogins": [
+    {
+      "description": "locked out user",
+      "username": "locked_out_user",
+      "password": "secret_sauce",
+      "error": "Epic sadface: Sorry, this user has been locked out."
+    },
+    {
+      "description": "empty username and password",
+      "username": "",
+      "password": "",
+      "error": "Epic sadface: Username is required"
+    },
+    {
+      "description": "empty username",
+      "username": "",
+      "password": "secret_sauce",
+      "error": "Epic sadface: Username is required"
+    },
+    {
+      "description": "empty password",
+      "username": "standard_user",
+      "password": "",
+      "error": "Epic sadface: Password is required"
+    },
+    {
+      "description": "wrong password",
+      "username": "standard_user",
+      "password": "wrong_password",
+      "error": "Epic sadface: Username and password do not match any user in this service"
+    },
+    {
+      "description": "unknown username",
+      "username": "no_such_user",
+      "password": "secret_sauce",
+      "error": "Epic sadface: Username and password do not match any user in this service"
+    },
+    {
+      "description": "username with wrong case",
+      "username": "Standard_User",
+      "password": "secret_sauce",
+      "error": "Epic sadface: Username and password do not match any user in this service"
+    },
+    {
+      "description": "SQL injection attempt",
+      "username": "' OR '1'='1",
+      "password": "' OR '1'='1",
+      "error": "Epic sadface: Username and password do not match any user in this service"
+    }
+  ]
+}

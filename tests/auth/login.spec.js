@@ -1,43 +1,33 @@
 // @ts-check
 const { test, expect } = require('../../fixtures/test-fixtures');
-const { users } = require('../../test-data/users');
+const loginData = require('../../test-data/login-data.json');
 
-test.describe('Login', () => {
-  test.beforeEach(async ({ loginPage }) => {
-    await loginPage.goto();
-  });
+/**
+ * Data-driven login tests.
+ * Every row in test-data/login-data.json becomes its own test,
+ * so adding a user or a negative case needs no code changes.
+ */
+test.describe('Login: valid users', () => {
+  for (const user of loginData.validUsers) {
+    test(`${user.description} (${user.username}) can log in @smoke`, async ({ page, loginPage }) => {
+      await loginPage.goto();
+      await loginPage.login(user.username, user.password);
 
-  test('standard user can log in and sees the product list @smoke', async ({ page, loginPage }) => {
-    await loginPage.login(users.standard.username, users.standard.password);
+      await expect(page).toHaveURL(/inventory\.html/);
+      await expect(page.getByTestId('title')).toHaveText('Products');
+      await expect(page.getByTestId('inventory-item')).toHaveCount(6);
+    });
+  }
+});
 
-    await expect(page).toHaveURL(/inventory\.html/);
-    await expect(page.getByTestId('title')).toHaveText('Products');
-    await expect(page.getByTestId('inventory-item')).toHaveCount(6);
-  });
-
-  test('locked out user sees a lockout error @regression', async ({ page, loginPage }) => {
-    await loginPage.login(users.lockedOut.username, users.lockedOut.password);
-
-    await expect(loginPage.errorMessage).toHaveText('Epic sadface: Sorry, this user has been locked out.');
-    await expect(page).not.toHaveURL(/inventory\.html/);
-  });
-
-  // Data-driven negative tests: one test per row.
-  const invalidLogins = [
-    { case: 'empty username', username: '', password: 'secret_sauce', error: 'Epic sadface: Username is required' },
-    { case: 'empty password', username: 'standard_user', password: '', error: 'Epic sadface: Password is required' },
-    {
-      case: 'wrong password',
-      username: 'standard_user',
-      password: 'wrong_password',
-      error: 'Epic sadface: Username and password do not match any user in this service',
-    },
-  ];
-
-  for (const data of invalidLogins) {
-    test(`shows an error for ${data.case} @regression`, async ({ loginPage }) => {
+test.describe('Login: failed logins', () => {
+  for (const data of loginData.invalidLogins) {
+    test(`shows an error for ${data.description} @regression`, async ({ page, loginPage }) => {
+      await loginPage.goto();
       await loginPage.login(data.username, data.password);
+
       await expect(loginPage.errorMessage).toHaveText(data.error);
+      await expect(page).not.toHaveURL(/inventory\.html/);
     });
   }
 });
