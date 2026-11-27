@@ -22,3 +22,9 @@ npm run test:ui        # Playwright UI mode
 npm run test:smoke     # only @smoke tests
 npm run report         # open the HTML report
 ```
+
+## Continuous integration
+
+Every pull request and every push to `main` runs the suite on Chromium and Firefox in
+GitHub Actions. The HTML report is uploaded as a build artifact
+(Actions tab → run → *Artifacts*).
