@@ -1,0 +1,16 @@
+{
+  "name": "playwright-saucedemo-automation",
+  "version": "1.0.0",
+  "description": "Playwright Test (JavaScript) UI automation suite for saucedemo.com using Page Object Model and custom fixtures",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}
