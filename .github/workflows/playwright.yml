@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      demo_failure:
+        description: 'Run the intentional demo failure to see screenshots, video and trace'
+        type: boolean
+        default: false
 
 jobs:
   test:
@@ -15,6 +20,8 @@ jobs:
       fail-fast: false
       matrix:
         project: [chromium, firefox]
+    env:
+      DEMO_FAILURE: ${{ inputs.demo_failure && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,6 +39,8 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test --project=${{ matrix.project }} --pass-with-no-tests
 
+      # HTML report: always uploaded. Failed tests inside it carry their
+      # screenshot, video and trace, viewable right in the report.
       - name: Upload HTML report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
@@ -39,3 +48,24 @@ jobs:
           name: playwright-report-${{ matrix.project }}
           path: playwright-report/
           retention-days: 14
+
+      # Raw failure evidence (PNG screenshots, WebM videos, trace.zip) and JUnit XML.
+      - name: Upload failure screenshots, videos and traces
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-evidence-${{ matrix.project }}
+          path: test-results/
+          retention-days: 14
+
+      - name: Write job summary
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "### Playwright results (${{ matrix.project }})"
+            if [ -f test-results/junit.xml ]; then
+              node -e "const x=require('fs').readFileSync('test-results/junit.xml','utf8');const m=x.match(/<testsuites[^>]*>/)[0];const g=k=>(m.match(new RegExp(k+'=\"(\\\\d+)\"'))||[])[1]||0;console.log('| Total | Failed | Skipped |\n|---|---|---|\n| '+g('tests')+' | '+g('failures')+' | '+g('skipped')+' |')"
+            fi
+            echo ""
+            echo "Download **playwright-report-${{ matrix.project }}** from the Artifacts section below, unzip it, and run \`npx playwright show-report <folder>\`."
+          } >> "$GITHUB_STEP_SUMMARY"
