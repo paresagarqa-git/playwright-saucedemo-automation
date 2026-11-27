@@ -20,13 +20,16 @@ npm test               # run everything headless
 npm run test:headed    # watch the browser
 npm run test:ui        # Playwright UI mode
 npm run test:smoke     # only @smoke tests
+npm run test:webkit    # one browser: test:chromium / test:firefox / test:webkit / test:edge
+WORKERS=4 npm test     # choose how many tests run in parallel
 npm run report         # open the HTML report
 ```
 
 ## Continuous integration
 
-Every pull request and every push to `main` runs the suite on Chromium and Firefox in
-GitHub Actions. The HTML report is uploaded as a build artifact
+Every pull request and every push to `main` runs the suite on Chromium, Firefox, WebKit (Safari engine)
+and Microsoft Edge in GitHub Actions, as four parallel jobs. Inside each job the tests run in parallel
+workers (`fullyParallel: true`, 2 workers on CI). The HTML report is uploaded as a build artifact
 (Actions tab → run → *Artifacts*).
 
 ## Project structure

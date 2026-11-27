@@ -10,7 +10,8 @@ module.exports = defineConfig({
   timeout: 30_000,
   expect: { timeout: 5_000 },
 
-  // Run test files in parallel; each test gets its own isolated browser context.
+  // Parallel execution: every test (not just every file) can run on its own worker,
+  // and each test gets its own isolated browser context.
   fullyParallel: true,
 
   // Fail the CI build if someone accidentally commits test.only.
@@ -18,7 +19,9 @@ module.exports = defineConfig({
 
   // Retry on CI only, so flaky tests are visible locally.
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  // Number of parallel workers. Override with WORKERS=4 (or --workers=4).
+  // Default: 2 on CI runners (2 vCPUs), half the CPU cores locally.
+  workers: process.env.WORKERS ? Number(process.env.WORKERS) : process.env.CI ? 2 : undefined,
 
   // Reports:
   //  - html  : interactive report with screenshots, videos and traces of failed tests
@@ -44,8 +47,14 @@ module.exports = defineConfig({
     trace: 'retain-on-failure',
   },
 
+  // Cross-browser: every test runs once per project.
+  //   npx playwright test --project=webkit     -> one browser
+  //   npx playwright test                      -> all of them
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    // Branded Microsoft Edge (installed browser, not a Playwright download).
+    { name: 'edge', use: { ...devices['Desktop Edge'], channel: 'msedge' } },
   ],
 });
